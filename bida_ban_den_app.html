@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Bảng Điểm Bida Bắn Đền</title>
+  <!-- Tối ưu Safari Toàn Màn Hình (Standalone PWA) -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Bida Bắn Đền" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#070b12" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230f172a'/><circle cx='50' cy='50' r='34' fill='%233b82f6'/><text x='50' y='61' font-size='32' font-weight='900' fill='white' text-anchor='middle' font-family='sans-serif'>9</text></svg>" />
+  <style>
+    /* CSS TỰ THÂN 100% - CHUẨN TOÀN MÀN HÌNH THEO MẪU IPHONE */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background-color: #070b12;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    /* Container chính chiếm đúng 100% chiều cao màn hình */
+    .app-screen {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      padding-top: max(8px, env(safe-area-inset-top));
+      padding-bottom: max(10px, env(safe-area-inset-bottom));
+      padding-left: 10px;
+      padding-right: 10px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* Header Bar Tối Giản Như Mẫu */
+    .top-bar {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4px;
+      flex-shrink: 0;
+      margin-bottom: 6px;
+    }
+    .top-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .top-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Huy hiệu thứ tự lượt cơ */
+    .turn-order-badge {
+      font-size: 10px;
+      font-weight: 900;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.35);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .turn-order-badge.turn-first {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #070b12;
+      border-color: #fef08a;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+    }
+
+    /* Modal Bốc Thăm Lượt Đánh 🎲 */
+    .turn-result-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: #070b12;
+      border: 1px solid #1e293b;
+      margin-bottom: 8px;
+      transition: all 0.15s ease;
+    }
+    .turn-result-card.is-break {
+      border-color: #f59e0b;
+      background: rgba(245, 158, 11, 0.12);
+    }
+    .turn-badge-pill {
+      font-size: 11px;
+      font-weight: 900;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.3);
+      color: #94a3b8;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .turn-badge-pill.turn-break {
+      background: #f59e0b;
+      color: #070b12;
+      border-color: #fef08a;
+    }
+    .top-icon-btn {
+      background: transparent;
+      border: none;
+      color: #38bdf8;
+      font-size: 20px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+    }
+    .top-icon-btn:active {
+      transform: scale(0.9);
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .history-badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: #ef4444;
+      color: #ffffff;
+      font-size: 9px;
+      font-weight: 900;
+      min-width: 15px;
+      height: 15px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 3px;
+    }
+    .table-info-pill {
+      font-size: 11px;
+      font-weight: 800;
+      color: #94a3b8;
+      background: rgba(30, 41, 59, 0.6);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-family: monospace;
+      cursor: pointer;
+    }
+
+    /* Khu vực bảng điểm chia đều chiều cao cho các cơ thủ */
+    .scoreboard-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    /* Khối thẻ từng cơ thủ (Tương tự ảnh mẫu) */
+    .player-block {
+      flex: 1;
+      min-height: 120px;
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 12px 16px;
+      position: relative;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      transition: transform 0.15s ease, filter 0.15s ease;
+    }
+
+    /* Bảng màu rực rỡ tương phản cao như ảnh mẫu */
+    .theme-blue {
+      background: linear-gradient(145deg, #3b82f6, #2563eb);
+    }
+    .theme-purple {
+      background: linear-gradient(145deg, #a855f7, #9333ea);
+    }
+    .theme-pink {
+      background: linear-gradient(145deg, #ec4899, #db2777);
+    }
+    .theme-orange {
+      background: linear-gradient(145deg, #f97316, #ea580c);
+    }
+    .theme-emerald {
+      background: linear-gradient(145deg, #10b981, #059669);
+    }
+    .theme-cyan {
+      background: linear-gradient(145deg, #06b6d4, #0891b2);
+    }
+
+    /* Hàng trên của thẻ: Tên & Menu 3 chấm */
+    .block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+    .player-title-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .player-name-text {
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      color: #ffffff;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+    .player-money-pill {
+      font-size: 12px;
+      font-weight: 800;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: rgba(255, 255, 255, 0.85);
+      background: rgba(0, 0, 0, 0.2);
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+    .btn-dots {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 20px;
+      font-weight: 900;
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+    .btn-dots:active {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Hàng giữa: Nút Trừ Lớn, Số Điểm Khổng Lồ, Nút Cộng Lớn */
+    .score-control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      flex: 1;
+    }
+
+    .btn-step {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-size: 42px;
+      font-weight: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.1s ease, background 0.1s ease;
+      touch-action: manipulation;
+    }
+    .btn-step:active {
+      transform: scale(0.85);
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Số điểm khổng lồ ở giữa */
+    .score-huge {
+      font-size: 78px;
+      font-weight: 900;
+      line-height: 1;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      text-align: center;
+      text-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      cursor: pointer;
+      padding: 0 8px;
+    }
+    @media (max-height: 700px) {
+      .score-huge { font-size: 62px; }
+      .btn-step { width: 56px; height: 56px; font-size: 36px; }
+    }
+
+    /* Modals & Popups */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-backdrop.hidden { display: none; }
+    .modal-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 22px;
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+    }
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .modal-head h3 {
+      font-size: 16px;
+      font-weight: 800;
+      color: #f1f5f9;
+    }
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 22px;
+      cursor: pointer;
+    }
+    .input-field {
+      width: 100%;
+      height: 46px;
+      border-radius: 12px;
+      background: #070b12;
+      border: 1px solid #334155;
+      color: #fff;
+      padding: 0 14px;
+      font-size: 15px;
+      outline: none;
+      margin-top: 6px;
+    }
+    .input-field:focus { border-color: #06b6d4; }
+
+    /* Lịch sử trong modal */
+    .history-list-box {
+      max-height: 320px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+    }
+    .history-entry {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      background: rgba(7, 11, 18, 0.7);
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+    .hist-badge {
+      font-size: 12px;
+      font-weight: 900;
+      font-family: monospace;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .badge-add { background: rgba(5, 150, 105, 0.3); color: #34d399; }
+    .badge-sub { background: rgba(220, 38, 38, 0.3); color: #f87171; }
+    .hist-meta { font-size: 10px; color: #64748b; }
+    .hist-diff { font-family: monospace; color: #94a3b8; font-weight: 800; }
+    .hist-diff b { color: #fff; }
+
+    /* Nút chọn nhanh điểm trong Menu 3 chấm */
+    .quick-score-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin: 12px 0;
+    }
+    .btn-quick-val {
+      height: 42px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      font-family: monospace;
+      border: 1px solid transparent;
+      cursor: pointer;
+    }
+    .btn-q-sub { background: rgba(220, 38, 38, 0.25); border-color: rgba(239, 68, 68, 0.4); color: #f87171; }
+    .btn-q-add { background: rgba(5, 150, 105, 0.25); border-color: rgba(16, 185, 129, 0.4); color: #34d399; }
+
+    .price-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .btn-price-choice {
+      height: 40px;
+      border-radius: 10px;
+      background: #070b12;
+      border: 1px solid #1e293b;
+      color: #cbd5e1;
+      font-size: 12px;
+      font-weight: 800;
+      font-family: monospace;
+      cursor: pointer;
+    }
+    .btn-price-choice.active {
+      border-color: #f59e0b;
+      color: #fcd34d;
+      background: rgba(245, 158, 11, 0.15);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-screen">
+    <!-- Top Bar Theo Đúng Mẫu -->
+    <div class="top-bar">
+      <!-- Cài đặt bên trái -->
+      <div class="top-bar-left">
+        <button class="top-icon-btn" onclick="openModal('settings-modal')" title="Cài đặt">
+          ⚙️
+        </button>
+        <div class="table-info-pill" onclick="openModal('settlement-modal')" id="header-price-tag">
+          3.000đ/đ • Tổng kết
+        </div>
+      </div>
+
+      <!-- Bốc thăm ngẫu nhiên, Lịch sử, Reset, Thêm người -->
+      <div class="top-bar-right">
+        <!-- Biểu tượng xúc xắc 🎲 Bốc thăm ngẫu nhiên thứ tự đánh -->
+        <button class="top-icon-btn" onclick="openRandomTurnModal()" title="Bốc thăm ngẫu nhiên thứ tự đánh">
+          🎲
+        </button>
+
+        <!-- Biểu tượng đồng hồ nhỏ 🕒 xem nhật ký -->
+        <button class="top-icon-btn" onclick="openModal('history-modal')" title="Nhật ký cộng trừ">
+          🕒
+          <span class="history-badge" id="history-badge-count">0</span>
+        </button>
+
+        <!-- Nút Reset ván mới 🔄 -->
+        <button class="top-icon-btn" onclick="confirmResetScores()" title="Đặt lại điểm số ván mới">
+          🔄
+        </button>
+
+        <!-- Nút Thêm cơ thủ ➕ -->
+        <button class="top-icon-btn" onclick="openModal('add-player-modal')" title="Thêm cơ thủ mới">
+          ➕
+        </button>
+      </div>
+    </div>
+
+    <!-- Khu vực Bảng Điểm Toàn Màn Hình Chia Đều (Theo ảnh mẫu) -->
+    <div class="scoreboard-container" id="scoreboard-container">
+      <!-- Render động các khối cơ thủ -->
+    </div>
+  </div>
+
+  <!-- MODAL 1: LỊCH SỬ CỘNG TRỪ ĐIỂM (MỞ KHI BẤM BIỂU TƯỢNG ĐỒNG HỒ 🕒) -->
+  <div class="modal-backdrop hidden" id="history-modal">
+    <div class="modal-box" style="display: flex; flex-direction: column; max-height: 85vh;">
+      <div class="modal-head">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="font-size: 18px;">🕒</span>
+          <div>
+            <h3>Nhật Ký Cộng Trừ Điểm</h3>
+            <p style="font-size: 11px; color: #94a3b8;" id="modal-hist-count">0 lượt thao tác</p>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeModal('history-modal')">✕</button>
+      </div>
+
+      <div class="history-list-box" id="modal-history-list"></div>
+
+      <div style="display: flex; gap: 8px; border-top: 1px solid #1e293b; padding-top: 12px;">
+        <button onclick="handleUndo();" id="btn-modal-undo" style="flex: 1.2; height: 44px; border-radius: 12px; background: rgba(120, 53, 15, 0.4); border: 1px solid rgba(245, 158, 11, 0.5); color: #fcd34d; font-size: 13px; font-weight: 800; cursor: pointer;">
+          ↩ Hoàn tác lượt gần nhất
+        </button>
+        <button onclick="closeModal('history-modal')" style="flex: 0.8; height: 44px; border-radius: 12px; background: #1e293b; color: #94a3b8; border: none; font-size: 13px; font-weight: 700; cursor: pointer;">
+          Đóng
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: THAO TÁC CƠ THỦ (MENU 3 CHẤM •••) -->
+  <div class="modal-backdrop hidden" id="player-menu-modal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 id="menu-player-title">Cơ thủ</h3>
+        <button class="modal-close" onclick="closeModal('player-menu-modal')">✕</button>
+      </div>
+
+      <p style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Cộng / Trừ nhanh nhiều điểm</p>
+      <div class="quick-score-grid">
+        <button class="btn-quick-val btn-q-sub" onclick="quickScoreAction(-5)">-5 điểm</button>
+        <button class="btn-quick-val btn-q-sub" onclick="quickScoreAction(-2)">-2 điểm</button>
+        <button class="btn-quick-val btn-q-sub" onclick="quickScoreAction(-1)">-1 điểm</button>
+        <button class="btn-quick-val btn-q-add" onclick="quickScoreAction(1)">+1 điểm</button>
+        <button class="btn-quick-val btn-q-add" onclick="quickScoreAction(2)">+2 điểm</button>
+        <button class="btn-quick-val btn-q-add" onclick="quickScoreAction(5)">+5 điểm</button>
+      </div>
+
+      <div style="margin-top: 10px;">
+        <label style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Nhập số điểm trực tiếp</label>
+        <div style="display: flex; gap: 6px; margin-top: 4px;">
+          <input type="number" id="input-direct-score" placeholder="Số điểm..." class="input-field" style="margin-top: 0; flex: 1;" />
+          <button onclick="submitDirectScore(true)" style="padding: 0 14px; border-radius: 10px; background: #059669; color: #fff; font-weight: 800; border: none;">Cộng</button>
+          <button onclick="submitDirectScore(false)" style="padding: 0 14px; border-radius: 10px; background: #dc2626; color: #fff; font-weight: 800; border: none;">Trừ</button>
+        </div>
+      </div>
+
+      <div style="margin-top: 10px;">
+        <button onclick="setPlayerAsBreaker()" style="width: 100%; height: 38px; border-radius: 10px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #fcd34d; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          🎱 Đặt làm Cơ Phá (#1) ván này
+        </button>
+      </div>
+
+      <div style="margin-top: 16px; border-top: 1px solid #1e293b; padding-top: 12px; display: flex; justify-content: space-between;">
+        <button onclick="confirmRemovePlayerFromMenu()" style="height: 38px; padding: 0 14px; border-radius: 10px; background: rgba(220, 38, 38, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; font-size: 12px; font-weight: 800; cursor: pointer;">
+          🗑 Xóa cơ thủ này
+        </button>
+        <button onclick="closeModal('player-menu-modal')" style="height: 38px; padding: 0 16px; border-radius: 10px; background: #1e293b; color: #94a3b8; border: none; font-size: 12px; font-weight: 700; cursor: pointer;">
+          Xong
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: CÀI ĐẶT ĐƠN GIÁ (⚙️) -->
+  <div class="modal-backdrop hidden" id="settings-modal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>⚙️ Cấu Hình Đơn Giá & Bàn Đấu</h3>
+        <button class="modal-close" onclick="closeModal('settings-modal')">✕</button>
+      </div>
+      <label style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; display: block;">Mức đơn giá (VNĐ / Điểm)</label>
+      <div class="price-grid">
+        <button class="btn-price-choice" onclick="setPrice(2000)">2.000đ</button>
+        <button class="btn-price-choice" onclick="setPrice(3000)">3.000đ</button>
+        <button class="btn-price-choice" onclick="setPrice(5000)">5.000đ</button>
+        <button class="btn-price-choice" onclick="setPrice(10000)">10.000đ</button>
+        <button class="btn-price-choice" onclick="setPrice(20000)">20.000đ</button>
+        <button class="btn-price-choice" onclick="setPrice(50000)">50.000đ</button>
+      </div>
+      <div>
+        <label style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Hoặc tự nhập đơn giá</label>
+        <div style="display: flex; gap: 6px; margin-top: 4px;">
+          <input type="number" id="input-custom-price" placeholder="Nhập số tiền..." class="input-field" style="margin-top: 0; flex: 1;" />
+          <button onclick="handleCustomPriceSubmit()" style="padding: 0 16px; border-radius: 12px; background: #f59e0b; color: #070b12; font-weight: 800; font-size: 12px; border: none; cursor: pointer;">Lưu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: THÊM CƠ THỦ (➕) -->
+  <div class="modal-backdrop hidden" id="add-player-modal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>➕ Thêm Cơ Thủ Mới</h3>
+        <button class="modal-close" onclick="closeModal('add-player-modal')">✕</button>
+      </div>
+      <div>
+        <label style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Tên cơ thủ</label>
+        <input type="text" id="input-new-player" placeholder="Ví dụ: Long, Tiến, Phước..." class="input-field" />
+      </div>
+      <div style="display: flex; gap: 8px; margin-top: 14px;">
+        <button onclick="closeModal('add-player-modal')" style="flex: 1; height: 42px; border-radius: 10px; background: #1e293b; color: #94a3b8; border: none; font-size: 12px; font-weight: 700; cursor: pointer;">Hủy</button>
+        <button onclick="handleAddPlayer()" style="flex: 1; height: 42px; border-radius: 10px; background: #38bdf8; color: #070b12; border: none; font-size: 12px; font-weight: 800; cursor: pointer;">Thêm ngay</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 5: TỔNG KẾT TIỀN THẮNG/THUA -->
+  <div class="modal-backdrop hidden" id="settlement-modal">
+    <div class="modal-box" style="display: flex; flex-direction: column; max-height: 85vh;">
+      <div class="modal-head">
+        <h3>📋 Bảng Tổng Kết Tiền Bắn Đền</h3>
+        <button class="modal-close" onclick="closeModal('settlement-modal')">✕</button>
+      </div>
+      <div id="settlement-list" style="flex: 1; overflow-y: auto; margin-bottom: 12px;"></div>
+      <div style="display: flex; gap: 8px; border-top: 1px solid #1e293b; padding-top: 12px;">
+        <button onclick="closeModal('settlement-modal')" style="flex: 1; height: 42px; border-radius: 10px; background: #1e293b; color: #94a3b8; border: none; font-size: 12px; font-weight: 700; cursor: pointer;">Đóng</button>
+        <button onclick="confirmResetScoresFromModal()" style="flex: 1; height: 42px; border-radius: 10px; background: #f59e0b; color: #070b12; border: none; font-size: 12px; font-weight: 900; cursor: pointer;">Chốt & Ván Mới</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 6: BỐC THĂM LƯỢT ĐÁNH NGẪU NHIÊN 🎲 -->
+  <div class="modal-backdrop hidden" id="random-turn-modal">
+    <div class="modal-box" style="display: flex; flex-direction: column; max-height: 85vh;">
+      <div class="modal-head">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 24px;">🎲</span>
+          <div>
+            <h3>Bốc Thăm Thứ Tự Lượt Đánh</h3>
+            <p style="font-size: 11px; color: #94a3b8;" id="turn-modal-status">Ngẫu nhiên phân định cơ phá & vòng đánh</p>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeModal('random-turn-modal')">✕</button>
+      </div>
+
+      <!-- Danh sách hiển thị kết quả thứ tự đánh -->
+      <div id="turn-order-list" style="margin: 10px 0; max-height: 280px; overflow-y: auto;">
+        <!-- Render động qua JS -->
+      </div>
+
+      <!-- Các nút hành động -->
+      <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #1e293b; padding-top: 14px;">
+        <div style="display: flex; gap: 8px;">
+          <button onclick="startRollTurnAnimation()" id="btn-roll-again" style="flex: 1; height: 44px; border-radius: 12px; background: rgba(56, 189, 248, 0.15); border: 1px solid #38bdf8; color: #38bdf8; font-size: 13px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span>🎲</span> Bốc Thăm Lại
+          </button>
+          <button onclick="applyTurnOrder(true)" id="btn-apply-reorder" style="flex: 1.3; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #f59e0b, #d97706); border: none; color: #070b12; font-size: 13px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
+            ✓ Xếp Bảng Đấu Theo Lượt
+          </button>
+        </div>
+        <button onclick="applyTurnOrder(false)" style="height: 36px; border-radius: 10px; background: #1e293b; color: #94a3b8; border: none; font-size: 11px; font-weight: 700; cursor: pointer;">
+          Chỉ gắn số thứ tự (Giữ nguyên vị trí thẻ)
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- SCRIPT LOGIC TOÀN DIỆN -->
+  <script>
+    const STORAGE_KEY = "ban_den_billiard_fullscreen_v1";
+
+    const THEME_COLORS = ["theme-blue", "theme-purple", "theme-pink", "theme-orange", "theme-emerald", "theme-cyan"];
+
+    let state = {
+      pricePerPoint: 3000,
+      players: [
+        { id: "p1", name: "Long", score: 0, themeClass: "theme-blue", turnOrder: 1 },
+        { id: "p2", name: "Tien", score: -4, themeClass: "theme-purple", turnOrder: 2 },
+        { id: "p3", name: "Phước", score: 4, themeClass: "theme-pink", turnOrder: 3 },
+      ],
+      history: []
+    };
+
+    let activeMenuPlayerId = null;
+
+    // Nạp LocalStorage
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.players && Array.isArray(parsed.players) && parsed.players.length > 0) {
+          state.players = parsed.players;
+        }
+        if (parsed.pricePerPoint) state.pricePerPoint = parsed.pricePerPoint;
+        if (parsed.history && Array.isArray(parsed.history)) state.history = parsed.history;
+      }
+    } catch (e) {}
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {}
+      render();
+    }
+
+    // Modal
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('hidden');
+      if (id === 'history-modal') renderHistoryModal();
+      if (id === 'settlement-modal') renderSettlement();
+    }
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('hidden');
+    }
+
+    // Ghi điểm (Cộng / Trừ 1)
+    function changeScore(playerId, delta) {
+      const player = state.players.find(p => p.id === playerId);
+      if (!player) return;
+
+      const scoreBefore = player.score;
+      player.score += delta;
+
+      state.history.unshift({
+        id: "hist_" + Date.now(),
+        playerId,
+        playerName: player.name,
+        delta,
+        scoreBefore,
+        scoreAfter: player.score,
+        timestamp: Date.now()
+      });
+
+      if (state.history.length > 60) state.history.pop();
+      saveState();
+    }
+
+    // Hoàn tác (Undo)
+    function handleUndo() {
+      if (state.history.length === 0) return;
+      const last = state.history.shift();
+      const player = state.players.find(p => p.id === last.playerId);
+      if (player) {
+        player.score = last.scoreBefore;
+      }
+      saveState();
+      renderHistoryModal();
+    }
+
+    // Menu 3 chấm của cơ thủ
+    function openPlayerMenu(playerId) {
+      activeMenuPlayerId = playerId;
+      const player = state.players.find(p => p.id === playerId);
+      if (!player) return;
+      document.getElementById('menu-player-title').innerText = player.name + " (" + player.score + " điểm)";
+      document.getElementById('input-direct-score').value = "";
+      openModal('player-menu-modal');
+    }
+
+    function quickScoreAction(delta) {
+      if (!activeMenuPlayerId) return;
+      changeScore(activeMenuPlayerId, delta);
+      closeModal('player-menu-modal');
+    }
+
+    function submitDirectScore(isAdd) {
+      if (!activeMenuPlayerId) return;
+      const input = document.getElementById('input-direct-score');
+      const val = parseInt(input.value, 10);
+      if (!isNaN(val) && val > 0) {
+        changeScore(activeMenuPlayerId, isAdd ? val : -val);
+      }
+      closeModal('player-menu-modal');
+    }
+
+    function confirmRemovePlayerFromMenu() {
+      if (!activeMenuPlayerId) return;
+      if (confirm("Xóa cơ thủ này khỏi bảng đấu?")) {
+        state.players = state.players.filter(p => p.id !== activeMenuPlayerId);
+        closeModal('player-menu-modal');
+        saveState();
+      }
+    }
+
+    // Đặt cơ thủ làm người phá bi (#1)
+    function setPlayerAsBreaker() {
+      if (!activeMenuPlayerId) return;
+      const player = state.players.find(p => p.id === activeMenuPlayerId);
+      if (!player) return;
+      player.turnOrder = 1;
+      let nextOrder = 2;
+      state.players.forEach(p => {
+        if (p.id !== activeMenuPlayerId) {
+          p.turnOrder = nextOrder++;
+        }
+      });
+      state.players.sort((a, b) => (a.turnOrder || 99) - (b.turnOrder || 99));
+      closeModal('player-menu-modal');
+      saveState();
+    }
+
+    // Thêm cơ thủ
+    function handleAddPlayer() {
+      const input = document.getElementById('input-new-player');
+      const name = input.value.trim();
+      if (!name) return;
+      const themeClass = THEME_COLORS[state.players.length % THEME_COLORS.length];
+      state.players.push({
+        id: "p_" + Date.now(),
+        name,
+        score: 0,
+        turnOrder: state.players.length + 1,
+        themeClass
+      });
+      input.value = "";
+      closeModal('add-player-modal');
+      saveState();
+    }
+
+    // Đơn giá
+    function setPrice(val) {
+      state.pricePerPoint = val;
+      closeModal('settings-modal');
+      saveState();
+    }
+    function handleCustomPriceSubmit() {
+      const input = document.getElementById('input-custom-price');
+      const val = parseInt(input.value, 10);
+      if (!isNaN(val) && val >= 0) setPrice(val);
+    }
+
+    // Reset ván mới
+    function confirmResetScores() {
+      if (confirm("Đặt lại điểm số 0 cho ván mới? (Giữ nguyên cơ thủ)")) {
+        state.players.forEach(p => p.score = 0);
+        state.history = [];
+        saveState();
+      }
+    }
+    function confirmResetScoresFromModal() {
+      confirmResetScores();
+      closeModal('settlement-modal');
+    }
+
+    // ==========================================
+    // CƠ CHẾ BỐC THĂM LƯỢT ĐÁNH NGẪU NHIÊN 🎲
+    // ==========================================
+    let currentRollResult = [];
+    let isRolling = false;
+
+    function openRandomTurnModal() {
+      if (state.players.length === 0) {
+        alert("Vui lòng thêm ít nhất 2 cơ thủ để bốc thăm lượt đánh!");
+        return;
+      }
+      openModal('random-turn-modal');
+      startRollTurnAnimation();
+    }
+
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function startRollTurnAnimation() {
+      if (isRolling || state.players.length === 0) return;
+      isRolling = true;
+
+      const btnRoll = document.getElementById('btn-roll-again');
+      const btnApply = document.getElementById('btn-apply-reorder');
+      const statusEl = document.getElementById('turn-modal-status');
+      if (btnRoll) btnRoll.disabled = true;
+      if (btnApply) btnApply.disabled = true;
+
+      statusEl.innerText = "Đang xáo trộn ngẫu nhiên... 🎲";
+      statusEl.style.color = "#38bdf8";
+
+      let rollCount = 0;
+      const maxRolls = 14;
+      const interval = setInterval(() => {
+        const shuffled = [...state.players].sort(() => Math.random() - 0.5);
+        renderTurnOrderPreview(shuffled, true);
+        rollCount++;
+
+        if (rollCount >= maxRolls) {
+          clearInterval(interval);
+          currentRollResult = shuffleArray([...state.players]);
+          renderTurnOrderPreview(currentRollResult, false);
+          statusEl.innerText = "✓ Đã bốc thăm xong! Cơ thủ số 1 sẽ phá bi.";
+          statusEl.style.color = "#34d399";
+          isRolling = false;
+          if (btnRoll) btnRoll.disabled = false;
+          if (btnApply) btnApply.disabled = false;
+
+          if (navigator.vibrate) {
+            try { navigator.vibrate([30, 40, 60]); } catch (e) {}
+          }
+        }
+      }, 60);
+    }
+
+    function renderTurnOrderPreview(playerList, isShuffling) {
+      const container = document.getElementById('turn-order-list');
+      if (!container) return;
+
+      let html = "";
+      playerList.forEach((p, idx) => {
+        const isFirst = idx === 0;
+        const rankTitle = isFirst ? "🎱 #1 PHÁ BI" : `#${idx + 1} Đánh tiếp`;
+        const cardClass = isFirst ? "turn-result-card is-break" : "turn-result-card";
+        const pillClass = isFirst ? "turn-badge-pill turn-break" : "turn-badge-pill";
+
+        html += `
+          <div class="${cardClass}" style="${isShuffling ? 'opacity: 0.85; transform: scale(0.98);' : 'opacity: 1; transform: scale(1);'}">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 28px; height: 28px; border-radius: 50%; background: ${isFirst ? '#f59e0b' : '#1e293b'}; color: ${isFirst ? '#070b12' : '#cbd5e1'}; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 13px;">
+                ${idx + 1}
+              </div>
+              <div>
+                <div style="font-weight: 800; font-size: 15px; color: #fff;">${p.name}</div>
+                <div style="font-size: 11px; color: ${isFirst ? '#fcd34d' : '#94a3b8'};">${p.score > 0 ? ('+' + p.score) : p.score} điểm</div>
+              </div>
+            </div>
+            <span class="${pillClass}">${rankTitle}</span>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function applyTurnOrder(reorderCards) {
+      if (currentRollResult.length === 0) return;
+
+      currentRollResult.forEach((p, idx) => {
+        const real = state.players.find(item => item.id === p.id);
+        if (real) {
+          real.turnOrder = idx + 1;
+        }
+      });
+
+      if (reorderCards) {
+        const idMap = new Map();
+        currentRollResult.forEach((p, idx) => idMap.set(p.id, idx));
+        state.players.sort((a, b) => (idMap.get(a.id) ?? 99) - (idMap.get(b.id) ?? 99));
+      }
+
+      saveState();
+      closeModal('random-turn-modal');
+    }
+
+    // Render Bảng Điểm Toàn Màn Hình
+    function render() {
+      document.getElementById('header-price-tag').innerText = state.pricePerPoint.toLocaleString("vi-VN") + "đ/đ • Tổng kết";
+      document.getElementById('history-badge-count').innerText = state.history.length > 9 ? "9+" : state.history.length;
+
+      const container = document.getElementById('scoreboard-container');
+      if (state.players.length === 0) {
+        container.innerHTML = `
+          <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #64748b;">
+            <div style="font-size: 32px; margin-bottom: 8px;">🎱</div>
+            <p style="font-size: 14px;">Chưa có cơ thủ nào.</p>
+            <button onclick="openModal('add-player-modal')" style="margin-top: 12px; padding: 10px 18px; border-radius: 12px; background: #38bdf8; color: #070b12; font-weight: 800; border: none; cursor: pointer;">+ Thêm cơ thủ</button>
+          </div>
+        `;
+        return;
+      }
+
+      let html = "";
+      state.players.forEach((p, idx) => {
+        const money = p.score * state.pricePerPoint;
+        const moneyStr = (money > 0 ? "+" : "") + money.toLocaleString("vi-VN") + "đ";
+        const theme = p.themeClass || THEME_COLORS[idx % THEME_COLORS.length];
+
+        let turnBadge = "";
+        if (p.turnOrder) {
+          if (p.turnOrder === 1) {
+            turnBadge = `<span class="turn-order-badge turn-first">🎱 #1 Phá</span>`;
+          } else {
+            turnBadge = `<span class="turn-order-badge">#${p.turnOrder}</span>`;
+          }
+        }
+
+        html += `
+          <div class="player-block ${theme}">
+            <!-- Header của thẻ -->
+            <div class="block-header">
+              <div class="player-title-box">
+                <span class="player-name-text">${p.name}</span>
+                ${turnBadge}
+                <span class="player-money-pill">${moneyStr}</span>
+              </div>
+              <button class="btn-dots" onclick="openPlayerMenu('${p.id}')">•••</button>
+            </div>
+
+            <!-- Khu vực điều khiển: Nút Trừ Lớn, Số Điểm Khổng Lồ, Nút Cộng Lớn -->
+            <div class="score-control-row">
+              <button class="btn-step" onclick="changeScore('${p.id}', -1)" title="Trừ 1">−</button>
+              <div class="score-huge" onclick="openPlayerMenu('${p.id}')" title="Chạm để chỉnh sửa">${p.score}</div>
+              <button class="btn-step" onclick="changeScore('${p.id}', 1)" title="Cộng 1">+</button>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // Render Modal Lịch Sử (Khi bấm vào đồng hồ 🕒)
+    function renderHistoryModal() {
+      const container = document.getElementById('modal-history-list');
+      const countEl = document.getElementById('modal-hist-count');
+      if (!container) return;
+
+      countEl.innerText = state.history.length + " lượt ghi điểm";
+
+      if (state.history.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 30px; color: #64748b; font-size: 12px;">
+            Chưa có thao tác nào. Chạm + hoặc − trên thẻ để bắt đầu tính điểm.
+          </div>
+        `;
+        return;
+      }
+
+      let html = "";
+      state.history.slice(0, 40).forEach(entry => {
+        const date = new Date(entry.timestamp);
+        const timeStr = date.getHours().toString().padStart(2, '0') + ":" + 
+                        date.getMinutes().toString().padStart(2, '0') + ":" + 
+                        date.getSeconds().toString().padStart(2, '0');
+        const isAdd = entry.delta > 0;
+
+        html += `
+          <div class="history-entry">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="hist-badge ${isAdd ? 'badge-add' : 'badge-sub'}">
+                ${isAdd ? ("+" + entry.delta) : entry.delta}
+              </span>
+              <div>
+                <div style="font-weight: 800; color: #fff;">${entry.playerName}</div>
+                <div class="hist-meta">${timeStr}</div>
+              </div>
+            </div>
+            <div class="hist-diff">
+              ${entry.scoreBefore} ➔ <b>${entry.scoreAfter}</b>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    // Render Modal Tổng Kết Tiền
+    function renderSettlement() {
+      const container = document.getElementById('settlement-list');
+      const sorted = [...state.players].sort((a,b) => b.score - a.score);
+      let html = "";
+      sorted.forEach((p, idx) => {
+        const money = p.score * state.pricePerPoint;
+        const color = money > 0 ? "#34d399" : money < 0 ? "#f87171" : "#94a3b8";
+
+        html += `
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #070b12; border: 1px solid #1e293b; border-radius: 12px; margin-bottom: 6px;">
+            <div>
+              <span style="font-size: 11px; font-weight: 800; color: #64748b;">#${idx+1} </span>
+              <span style="font-size: 14px; font-weight: 800; color: #fff;">${p.name}</span>
+              <div style="font-size: 11px; color: #94a3b8;">${p.score > 0 ? ('+' + p.score) : p.score} điểm</div>
+            </div>
+            <div style="text-align: right; font-family: monospace;">
+              <div style="font-size: 16px; font-weight: 900; color: ${color};">
+                ${money > 0 ? '+' : ''}${money.toLocaleString("vi-VN")}đ
+              </div>
+              <div style="font-size: 10px; color: #64748b;">${money > 0 ? 'Thu về' : money < 0 ? 'Bắn đền / Nộp' : 'Hòa'}</div>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    // Tự khởi chạy
+    window.addEventListener('DOMContentLoaded', () => {
+      render();
+    });
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      render();
+    }
+  </script>
+</body>
+</html>
